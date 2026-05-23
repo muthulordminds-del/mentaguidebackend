@@ -24,7 +24,10 @@ const allowedOrigins = [
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    origin: "https://mentaguide.vercel.app",
+    origin: [
+        "http://localhost:5173",
+        "https://mentaguide.vercel.app"
+    ],
     credentials: true
 }));
 
