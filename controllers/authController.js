@@ -29,9 +29,10 @@ export const register = async (req, res) => {
         res.cookie('token', token, {
             httpOnly: true,
             secure: true,
-            sameSite: "None",
+            sameSite: 'None',
+            path: '/',
             maxAge: 24 * 60 * 60 * 1000
-        })
+        });
         // Sending email Welcome
         const mailOptions = {
             from: process.env.SENDER_EMAIL,
@@ -74,9 +75,10 @@ export const login = async (req, res) => {
         res.cookie('token', token, {
             httpOnly: true,
             secure: true,
-            sameSite: "None",
+            sameSite: 'None',
+            path: '/',
             maxAge: 24 * 60 * 60 * 1000
-        })
+        });
 
         return res.status(200).json({ success: true, message: "Login successful" });
 

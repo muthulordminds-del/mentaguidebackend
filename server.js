@@ -24,8 +24,8 @@ const allowedOrigins = [
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    origin: allowedOrigins,
-    credentials: true,
+    origin: "https://mentaguide.vercel.app",
+    credentials: true
 }));
 
 // Api Endpoints
