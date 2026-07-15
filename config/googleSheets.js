@@ -1,7 +1,7 @@
 import { google } from 'googleapis';
 
 const SPREADSHEET_ID = '1xV5ucUy1E03KBtooLn9p3Ouvpf2qCL5IUsc3qC9G0Ow';
-const SHEET_NAME = 'Sheet1'; // change this if your tab name is different
+const SHEET_NAME = 'Mentaguide Event Registration'; // change this if your tab name is different
 
 // Auth using service account credentials
 const getAuth = () => {
