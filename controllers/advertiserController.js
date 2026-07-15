@@ -1,52 +1,28 @@
 import advertiserModel from "../models/advertiserModel.js";
 import transporter from "../config/nodemailer.js";
-
-// Converts the advertiser data object into CSV text (header row + one data row)
-const buildAdvertiserCsv = (advertiserData) => {
-    const entries = Object.entries(advertiserData);
-
-    const escapeCsvValue = (value) => {
-        const formattedValue = Array.isArray(value) ? value.join('; ') : (value ?? '');
-        const stringValue = String(formattedValue);
-        // Wrap in quotes and escape existing quotes if the value has commas, quotes, or newlines
-        if (/[",\n]/.test(stringValue)) {
-            return `"${stringValue.replace(/"/g, '""')}"`;
-        }
-        return stringValue;
-    };
-
-    const headerRow = entries
-        .map(([key]) => key.replace(/([A-Z0-9])/g, ' $1').replace(/^./, str => str.toUpperCase()))
-        .map(escapeCsvValue)
-        .join(',');
-
-    const dataRow = entries.map(([, value]) => escapeCsvValue(value)).join(',');
-
-    return `${headerRow}\n${dataRow}`;
-};
+import { appendToSheet } from "../config/googleSheets.js";
 
 export const createAdvertiser = async (req, res) => {
     try {
         const advertiserData = req.body;
-        
+
         const newAdvertiser = new advertiserModel(advertiserData);
         await newAdvertiser.save();
 
-        const { fullName, email, companyName } = advertiserData;
+        // Save the registration details into the Google Sheet
+        try {
+            await appendToSheet(advertiserData);
+        } catch (sheetError) {
+            console.error("Error appending to Google Sheet:", sheetError);
+            // Don't block the user's submission if the sheet write fails
+        }
 
-        const csvContent = buildAdvertiserCsv(advertiserData);
-        const safeFileName = (fullName || 'advertiser').replace(/[^a-z0-9]/gi, '_');
+        const { fullName, email, companyName } = advertiserData;
 
         const mailToAdmin = {
             from: process.env.SMTP_USER,
             to: 'kaviyaalordminds@gmail.com',
             subject: `New Advertiser Signup: ${fullName} from ${companyName}`,
-            attachments: [ 
-                {
-                    filename: `advertiser_${safeFileName}.csv`,
-                    content: csvContent
-                }
-            ],
             html: `
             <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
                 <div style="background-color: #000000; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
@@ -56,7 +32,6 @@ export const createAdvertiser = async (req, res) => {
                     <p style="font-size: 16px; color: #333;">You have received a new advertiser application with the following details:</p>
                     <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
                         ${Object.entries(advertiserData).map(([key, value]) => {
-                            // Format key: "jobTitle" -> "Job Title", "section2Description" -> "Section 2 Description"
                             const formattedKey = key.replace(/([A-Z0-9])/g, ' $1').replace(/^./, str => str.toUpperCase());
                             const formattedValue = Array.isArray(value) ? value.join(', ') : (value || 'N/A');
                             return `
