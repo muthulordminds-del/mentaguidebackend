@@ -21,7 +21,7 @@ export const createAdvertiser = async (req, res) => {
 
         const mailToAdmin = {
             from: process.env.SMTP_USER,
-            to: 'kaviyaalordminds@gmail.com',
+            to: 'info@mentaguide.com',
             subject: `New Advertiser Signup: ${fullName} from ${companyName}`,
             html: `
             <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
