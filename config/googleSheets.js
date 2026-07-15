@@ -15,34 +15,47 @@ const getAuth = () => {
 };
 
 // Appends a row of advertiser registration data to the Google Sheet
+
 export const appendToSheet = async (advertiserData) => {
-  const auth = getAuth();
-  const sheets = google.sheets({ version: 'v4', auth });
+  try {
+    console.log("appendToSheet function called");
 
-  const row = [
-    new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
-    advertiserData.fullName || '',
-    advertiserData.jobTitle || '',
-    advertiserData.email || '',
-    advertiserData.whatsapp || '',
-    advertiserData.companyName || '',
-    advertiserData.website || '',
-    Array.isArray(advertiserData.industry) ? advertiserData.industry.join(', ') : (advertiserData.industry || ''),
-    advertiserData.location || '',
-    advertiserData.businessDescription || '',
-    advertiserData.businessStage || '',
-    Array.isArray(advertiserData.topicsOfInterest) ? advertiserData.topicsOfInterest.join(', ') : (advertiserData.topicsOfInterest || ''),
-    advertiserData.primaryReason || '',
-    advertiserData.additionalComments || ''
-  ];
+    const auth = getAuth();
+    const sheets = google.sheets({ version: 'v4', auth });
 
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEET_NAME}!A:N`,
-    valueInputOption: 'USER_ENTERED',
-    insertDataOption: 'INSERT_ROWS',
-    requestBody: {
-      values: [row],
-    },
-  });
+    const row = [
+      new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      advertiserData.fullName || '',
+      advertiserData.jobTitle || '',
+      advertiserData.email || '',
+      advertiserData.whatsapp || '',
+      advertiserData.companyName || '',
+      advertiserData.website || '',
+      Array.isArray(advertiserData.industry) ? advertiserData.industry.join(', ') : (advertiserData.industry || ''),
+      advertiserData.location || '',
+      advertiserData.businessDescription || '',
+      advertiserData.businessStage || '',
+      Array.isArray(advertiserData.topicsOfInterest) ? advertiserData.topicsOfInterest.join(', ') : (advertiserData.topicsOfInterest || ''),
+      advertiserData.primaryReason || '',
+      advertiserData.additionalComments || ''
+    ];
+
+    const response = await sheets.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${SHEET_NAME}!A:N`,
+      valueInputOption: 'USER_ENTERED',
+      insertDataOption: 'INSERT_ROWS',
+      requestBody: {
+        values: [row],
+      },
+    });
+
+    console.log("Google Sheet Updated Successfully");
+    console.log(response.data);
+
+  } catch (error) {
+    console.error("Google Sheet Error");
+    console.error(error.message);
+    console.error(error.response?.data);
+  }
 };
