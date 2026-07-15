@@ -22,7 +22,7 @@ export const submitContact = async (req, res) => {
 
         const mailToAdmin = {
             from: process.env.SMTP_USER,
-            to: 'muthulordminds@gmail.com',
+            to: 'info@mentaguide.com',
             subject: `New Contact Form Submission from ${name}`,
             html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
