@@ -4,9 +4,9 @@ import advertiserModel from "../models/advertiserModel.js";
 import transporter from "../config/nodemailer.js";
 import { appendToSheet } from "../config/googleSheets.js";
 
-const TOTAL_FEE = 3500;
-const PARTIAL_FEE = 1000;
-const BALANCE_FEE = TOTAL_FEE - PARTIAL_FEE; // 2500
+const TOTAL_FEE = 2;
+const PARTIAL_FEE = 1;
+const BALANCE_FEE = TOTAL_FEE - PARTIAL_FEE; // 1
 
 // ---------------------------------------------------------------
 // STEP 1: Create Razorpay order (called right after the advertiser
@@ -30,7 +30,7 @@ export const createOrder = async (req, res) => {
         const order = await razorpayInstance.orders.create({
             amount: amount * 100, // paise
             currency: "INR",
-            receipt: `adv_${advertiser._id}_${Date.now()}`,
+            receipt: `adv_${advertiser._id}`.slice(0, 40),
             notes: {
                 advertiserId: advertiser._id.toString(),
                 paymentType,
@@ -175,7 +175,7 @@ export const createBalanceOrder = async (req, res) => {
         const order = await razorpayInstance.orders.create({
             amount: BALANCE_FEE * 100,
             currency: "INR",
-            receipt: `adv_balance_${advertiser._id}_${Date.now()}`,
+            receipt: `bal_${advertiser._id}`.slice(0, 40),
             notes: { advertiserId: advertiser._id.toString(), paymentType: 'balance' },
         });
 
