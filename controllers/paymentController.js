@@ -60,6 +60,38 @@ export const createOrder = async (req, res) => {
 };
 
 // ---------------------------------------------------------------
+// STEP 1b: Record a payment failure reported directly by Razorpay
+// checkout (card declined, insufficient funds, user closed etc.)
+// This only updates the DB record — no email is sent for failures.
+// ---------------------------------------------------------------
+export const recordPaymentFailure = async (req, res) => {
+    try {
+        const { advertiserId, razorpay_order_id, reason } = req.body;
+
+        if (!advertiserId) {
+            return res.json({ success: false, message: "advertiserId is required." });
+        }
+
+        const advertiser = await advertiserModel.findById(advertiserId);
+        if (!advertiser) {
+            return res.json({ success: false, message: "Registration not found." });
+        }
+
+        advertiser.paymentStatus = 'failed';
+        advertiser.paymentFailureReason = reason || 'Payment failed at gateway';
+        if (razorpay_order_id) {
+            advertiser.razorpayOrderId = razorpay_order_id;
+        }
+        await advertiser.save();
+
+        return res.json({ success: true, message: "Payment failure recorded." });
+    } catch (error) {
+        console.error("Error recording payment failure:", error);
+        return res.json({ success: false, message: error.message || "Error recording payment failure" });
+    }
+};
+
+// ---------------------------------------------------------------
 // STEP 2: Verify payment signature after Razorpay checkout success,
 // mark advertiser as paid/partial_paid, save to sheet, send mail
 // ---------------------------------------------------------------
@@ -79,6 +111,18 @@ export const verifyPayment = async (req, res) => {
             .digest("hex");
 
         if (expectedSignature !== razorpay_signature) {
+            // Record the failed attempt against the advertiser's record too
+            try {
+                const failedAdvertiser = await advertiserModel.findById(advertiserId);
+                if (failedAdvertiser) {
+                    failedAdvertiser.paymentStatus = 'failed';
+                    failedAdvertiser.paymentFailureReason = 'Signature mismatch during verification';
+                    failedAdvertiser.razorpayPaymentId = razorpay_payment_id || '';
+                    await failedAdvertiser.save();
+                }
+            } catch (saveErr) {
+                console.error("Error saving failed payment record:", saveErr);
+            }
             return res.json({ success: false, message: "Payment verification failed. Signature mismatch." });
         }
 
@@ -127,7 +171,13 @@ export const verifyPayment = async (req, res) => {
                             ${balanceLine}
                             <p style="font-size:14px;color:#555;margin:10px 0 0 0;">Payment ID: ${razorpay_payment_id}</p>
                         </div>
-                        <p style="font-size: 15px; color: #333;">📅 11TH AUGUST 2026 &nbsp;|&nbsp; 🕚 11:11 AM &nbsp;|&nbsp; 📍 MERLIS HOTEL, COIMBATORE</p>
+                        <div style="background-color: #f4f9ec; border: 1px solid #a4d64f; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                            <p style="font-size: 16px; color: #202523; font-weight: bold; margin: 0 0 10px 0;">Event Details</p>
+                            <p style="font-size: 15px; color: #333; margin: 4px 0;">📅 11TH AUGUST 2026 &nbsp;|&nbsp; 🕚 11:11 AM &nbsp;|&nbsp; 📍 MERLIS HOTEL, COIMBATORE</p>
+                            <p style="margin: 15px 0 0 0;">
+                                <a href="https://mentaguide.com/event" style="display: inline-block; background-color: #a4d64f; color: #202523; text-decoration: none; font-weight: bold; padding: 10px 20px; border-radius: 25px; text-transform: uppercase; letter-spacing: 0.5px;">View Event Page</a>
+                            </p>
+                        </div>
                         <p style="font-size: 16px; color: #333; margin-top: 30px;">Best Regards,<br/><span style="color: #a4d64f; font-weight: bold;">The Mentaguide Team</span></p>
                     </div>
                 </div>

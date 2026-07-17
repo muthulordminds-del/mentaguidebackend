@@ -18,10 +18,11 @@ const advertiserSchema = new mongoose.Schema({
 
     // ---- Payment fields ----
     paymentType: { type: String, enum: ['full', 'partial'], default: null },
-    totalAmount: { type: Number, default: 3500 },
+    totalAmount: { type: Number, default: 2 },
     amountPaid: { type: Number, default: 0 },
-    balanceAmount: { type: Number, default: 3500 },
-    paymentStatus: { type: String, enum: ['pending', 'partial_paid', 'paid'], default: 'pending' },
+    balanceAmount: { type: Number, default: 2 },
+    paymentStatus: { type: String, enum: ['pending', 'partial_paid', 'paid', 'failed'], default: 'pending' },
+    paymentFailureReason: { type: String, default: '' },
 
     razorpayOrderId: { type: String, default: '' },
     razorpayPaymentId: { type: String, default: '' },
