@@ -54,12 +54,18 @@ export const appendToSheet = async (advertiserData) => {
       advertiserData.businessStage || '',
       Array.isArray(advertiserData.topicsOfInterest) ? advertiserData.topicsOfInterest.join(', ') : (advertiserData.topicsOfInterest || ''),
       advertiserData.primaryReason || '',
-      advertiserData.additionalComments || ''
+      advertiserData.additionalComments || '',
+      // Payment columns (O-S)
+      advertiserData.paymentType ? (advertiserData.paymentType === 'full' ? 'Full' : 'Partial') : '',
+      advertiserData.amountPaid ? `Rs.${advertiserData.amountPaid}` : '',
+      advertiserData.balanceAmount ? `Rs.${advertiserData.balanceAmount}` : 'Rs.0',
+      advertiserData.paymentStatus || 'pending',
+      advertiserData.razorpayPaymentId || ''
     ];
 
     const response = await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A:N`,
+      range: `${SHEET_NAME}!A:S`,
       valueInputOption: 'RAW',
       insertDataOption: 'INSERT_ROWS',
       requestBody: {

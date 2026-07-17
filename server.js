@@ -10,6 +10,7 @@ import authRoute from "./routes/authRoutes.js";
 import userRoute from "./routes/userRoutes.js";
 import contactRoute from "./routes/contactRoutes.js";
 import advertiserRoute from "./routes/advertiserRoute.js";
+import paymentRoute from "./routes/paymentRoutes.js";
 import { isAuthenticated } from "./controllers/authController.js";
 
 
@@ -50,6 +51,7 @@ app.use('/api/auth', authRoute);
 app.use('/api/user', userRoute);
 app.use('/api/contact', contactRoute);
 app.use('/api/advertiser', advertiserRoute);
+app.use('/api/payment', paymentRoute);
 
 app.listen(PORT, () => {
     console.log(`You goddamn right http://localhost:${PORT}`);

@@ -1,6 +1,5 @@
 import advertiserModel from "../models/advertiserModel.js";
 import transporter from "../config/nodemailer.js";
-import { appendToSheet } from "../config/googleSheets.js";
 
 export const createAdvertiser = async (req, res) => {
     try {
@@ -9,13 +8,10 @@ export const createAdvertiser = async (req, res) => {
         const newAdvertiser = new advertiserModel(advertiserData);
         await newAdvertiser.save();
 
-        // Save the registration details into the Google Sheet
-        try {
-            await appendToSheet(advertiserData);
-        } catch (sheetError) {
-            console.error("Error appending to Google Sheet:", sheetError);
-            // Don't block the user's submission if the sheet write fails
-        }
+        // Note: Google Sheet is intentionally NOT updated here.
+        // It gets written once, after payment is verified successfully
+        // (see paymentController.js -> verifyPayment), so the sheet only
+        // contains rows for advertisers who actually completed payment.
 
         const { fullName, email, companyName } = advertiserData;
 
@@ -82,7 +78,8 @@ export const createAdvertiser = async (req, res) => {
 
         return res.json({
             success: true,
-            message: "Advertiser signup form submitted successfully!"
+            message: "Advertiser signup form submitted successfully!",
+            advertiserId: newAdvertiser._id
         });
     } catch (error) {
         console.error("Error creating advertiser:", error);
