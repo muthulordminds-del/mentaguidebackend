@@ -5,8 +5,8 @@ import transporter from "../config/nodemailer.js";
 import { updateSheetRow } from "../config/googleSheets.js";
 import { PAYMENT_FAILED_TEMPLATE } from "../config/emailTemplates.js";
 
-const TOTAL_FEE = 3500;
-const PARTIAL_FEE = 1000;
+const TOTAL_FEE = 2;
+const PARTIAL_FEE = 1;
 const BALANCE_FEE = TOTAL_FEE - PARTIAL_FEE; // 1
 
 // Small helper so the "payment failed" email is sent the same way
