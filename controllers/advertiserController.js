@@ -15,51 +15,27 @@ import { REGISTRATION_PENDING_TEMPLATE } from "../config/emailTemplates.js";
 // sends a separate success/failure email and updates the SAME
 // Google Sheet row (not a duplicate).
 // ---------------------------------------------------------------
-export const createAdvertiser = async (req, res) => {
+export const getAdvertiserById = async (req, res) => {
     try {
-        const advertiserData = req.body;
-
-        const newAdvertiser = new advertiserModel(advertiserData);
-        await newAdvertiser.save();
-
-        // Create the initial "pending" row in the Google Sheet.
-        // Non-blocking for the user response: if this fails, the
-        // registration itself still succeeds and the sheet gets
-        // caught up automatically on the next payment status update
-        // (see updateSheetRow's fallback-to-append behaviour).
-        try {
-            await appendToSheet(newAdvertiser.toObject());
-        } catch (sheetError) {
-            console.error("Error appending initial registration to Google Sheet:", sheetError);
+        const { id } = req.params;
+        const advertiser = await advertiserModel.findById(id);
+        if (!advertiser) {
+            return res.json({ success: false, message: "Registration not found." });
         }
-
-        // Send registration-received email with a payment link.
-        // NOTE: update CLIENT_URL / the "/complete-payment" path below
-        // to match your actual frontend route that renders PaymentStep.
-        try {
-            const paymentLink = `${process.env.CLIENT_URL}/complete-payment/${newAdvertiser._id}`;
-            await transporter.sendMail({
-                from: process.env.SENDER_EMAIL || process.env.SMTP_USER,
-                to: newAdvertiser.email,
-                subject: "Registration Received - Complete Your Payment - Mentaguide Expand 360²",
-                html: REGISTRATION_PENDING_TEMPLATE
-                    .replace(/{{fullName}}/g, newAdvertiser.fullName || "")
-                    .replace(/{{paymentLink}}/g, paymentLink),
-            });
-        } catch (mailError) {
-            console.error("Error sending registration confirmation email:", mailError);
-        }
-
         return res.json({
             success: true,
-            message: "Advertiser signup form submitted successfully!",
-            advertiserId: newAdvertiser._id
+            advertiser: {
+                advertiserId: advertiser._id,
+                fullName: advertiser.fullName,
+                email: advertiser.email,
+                whatsapp: advertiser.whatsapp,
+                paymentStatus: advertiser.paymentStatus,
+                balanceAmount: advertiser.balanceAmount,
+                amountPaid: advertiser.amountPaid,
+            },
         });
     } catch (error) {
-        console.error("Error creating advertiser:", error);
-        return res.json({
-            success: false,
-            message: error.message || "Error submitting form"
-        });
+        console.error("Error fetching advertiser:", error);
+        return res.json({ success: false, message: error.message || "Error fetching registration" });
     }
 };
