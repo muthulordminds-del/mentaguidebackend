@@ -11,6 +11,7 @@ const formatWhatsappNumber = (number) => {
 };
 
 export const sendWhatsappMessage = async (toNumber, message) => {
+    console.log("WHATSAPP FUNCTION CALLED", toNumber);
     try {
         const result = await twilioClient.messages.create({
             from: process.env.TWILIO_WHATSAPP_FROM,

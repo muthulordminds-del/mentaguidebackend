@@ -29,6 +29,20 @@ const sendPaymentFailedEmail = async (advertiser, reason) => {
     }
 };
 
+// Same idea as sendPaymentFailedEmail, but for WhatsApp — shared by
+// both failure paths (gateway failure + signature mismatch).
+const sendPaymentFailedWhatsapp = async (advertiser, reason) => {
+    try {
+        const paymentLink = `${process.env.CLIENT_URL}/complete-payment/${advertiser._id}`;
+        await sendWhatsappMessage(
+            advertiser.whatsapp,
+            `Hi ${advertiser.fullName}, your payment for Mentaguide Expand 360² was unsuccessful (${reason || 'payment could not be completed'}). No worries — your registration is still saved. Retry here: ${paymentLink}`
+        );
+    } catch (waError) {
+        console.error("Error sending payment failure WhatsApp message:", waError);
+    }
+};
+
 // ---------------------------------------------------------------
 // STEP 1: Create Razorpay order (called right after the advertiser
 // registration form is saved, before showing the Razorpay checkout)
@@ -117,6 +131,9 @@ export const recordPaymentFailure = async (req, res) => {
         // Send payment-failed email with a retry link
         await sendPaymentFailedEmail(advertiser, advertiser.paymentFailureReason);
 
+        // Send payment-failed WhatsApp message with the same retry link
+        await sendPaymentFailedWhatsapp(advertiser, advertiser.paymentFailureReason);
+
         return res.json({ success: true, message: "Payment failure recorded." });
     } catch (error) {
         console.error("Error recording payment failure:", error);
@@ -162,6 +179,10 @@ export const verifyPayment = async (req, res) => {
                     // Send payment-failed email here too, so a signature
                     // mismatch also results in the advertiser being notified
                     await sendPaymentFailedEmail(failedAdvertiser, failedAdvertiser.paymentFailureReason);
+
+                    // Same for WhatsApp — signature mismatch is still a
+                    // failed payment from the advertiser's point of view
+                    await sendPaymentFailedWhatsapp(failedAdvertiser, failedAdvertiser.paymentFailureReason);
                 }
             } catch (saveErr) {
                 console.error("Error saving failed payment record:", saveErr);
@@ -335,6 +356,18 @@ export const verifyBalancePayment = async (req, res) => {
             await updateSheetRow(advertiser.toObject());
         } catch (sheetError) {
             console.error("Error updating Google Sheet after balance payment:", sheetError);
+        }
+
+        // Send WhatsApp confirmation for the balance payment too.
+        // Non-blocking: if this fails, the balance payment itself is
+        // still successfully recorded — only the notification is skipped.
+        try {
+            await sendWhatsappMessage(
+                advertiser.whatsapp,
+                `Hi ${advertiser.fullName}, your balance payment of ₹${BALANCE_FEE} for Mentaguide Expand 360² is confirmed! Your registration is now fully paid. Payment ID: ${razorpay_payment_id}`
+            );
+        } catch (waError) {
+            console.error("Error sending balance payment confirmation WhatsApp message:", waError);
         }
 
         return res.json({ success: true, message: "Balance payment verified successfully" });
